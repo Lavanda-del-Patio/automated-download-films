@@ -1,14 +1,9 @@
 name: "Build and publish to Docker - CI "
 description: "Pushes built artifacts to Docker"
-inputs:
-  directory:
-    description: "Directory"
-    required: true  
 runs:
   using: "composite"
   steps:
   - name: New snapshot
-    working-directory: ${{ inputs.directory }} 
     shell: bash
     run: |
       mvn -B versions:set -DnextSnapshot -DgenerateBackupPoms=false

@@ -7,7 +7,6 @@ on:
       - 'main'
       - 'develop'
   workflow_dispatch:    
-
 jobs:
   test-nightly:
     if: github.event_name == 'schedule'
@@ -44,9 +43,8 @@ jobs:
           directory: .
       - uses: ./.github/workflows/composite/build-push-docker-java-image
         with:
-          registry_username: ${{ secrets.DOCKER_USERNAME}}
+          registry_username: ${{ secrets.DOCKER_USERNAME }}
           registry_password: ${{ secrets.DOCKER_PASSWORD }}
-          directory: .
           github_workspace: $GITHUB_WORKSPACE
           github_token: ${{ secrets.GITHUB_TOKEN }} 
   next-snapshot:
@@ -59,8 +57,6 @@ jobs:
         with:
           ref: develop   
       - uses: ./.github/workflows/composite/next-maven-snapshot
-        with:
-          directory: .
   notification:
     needs: [release-build-push-docker, next-snapshot, test-nightly]
     runs-on: ubuntu-latest  
