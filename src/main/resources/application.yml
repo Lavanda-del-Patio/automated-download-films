@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: lavanda-automated-download-films
+  profiles:
+    active: dev
+cloud:
+  aws:
+    region:
+      static: eu-west-1
+    stack:
+      auto: false
+    sqs:
+      endpoint:
+        uri:
+          transmission: https://sqs.eu-west-1.amazonaws.com/836783797541/transmission
