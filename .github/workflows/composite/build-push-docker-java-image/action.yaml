@@ -36,6 +36,6 @@ runs:
         password: ${{ inputs.registry_password }}
     - name: Release
       shell: bash
-      run: mvn compile jib:build -s settings.xml
+      run: mvn compile -X jib:build -s settings.xml
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }} 
