@@ -4,7 +4,7 @@
 
 	<groupId>es.lavanda</groupId>
 	<artifactId>automated-download-films</artifactId>
-	<version>0.0.79-SNAPSHOT</version>
+	<version>0.0.79</version>
 	<packaging>jar</packaging>
 	<name>lavanda-automated-download-films</name>
 
