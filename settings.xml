@@ -39,7 +39,7 @@
     <server>
       <id>github</id>
       <username>luiscajl</username>
-      <password>${env.GITHUB_TOKEN}</password>
+      <password>${env.MAVEN_TOKEN}</password>
     </server>
   </servers>
 </settings>
