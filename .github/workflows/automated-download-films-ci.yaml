@@ -19,9 +19,9 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: Build Maven
-        run: mvn test -s $GITHUB_WORKSPACE/.mvn/settings.xml 
+        run: mvn test -s settings.xml 
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}  
       - name: Send telegram message
         if: always()
         uses: xinthink/action-telegram@v1
@@ -39,14 +39,14 @@ jobs:
       - uses: ./.github/workflows/composite/mvn-release
         if: ${{ github.ref == 'refs/heads/main' }}
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }} 
+          github_token: ${{ secrets.DEPLOY_GITHUB_TOKEN }} 
           directory: .
       - uses: ./.github/workflows/composite/build-push-docker-java-image
         with:
           registry_username: ${{ secrets.DOCKER_USERNAME }}
           registry_password: ${{ secrets.DOCKER_PASSWORD }}
           github_workspace: $GITHUB_WORKSPACE
-          github_token: ${{ secrets.GITHUB_TOKEN }} 
+          github_token: ${{ secrets.DEPLOY_GITHUB_TOKEN }} 
   next-snapshot:
     needs: release-build-push-docker
     if: (github.ref == 'refs/heads/main')  && (github.event_name == 'push')  
