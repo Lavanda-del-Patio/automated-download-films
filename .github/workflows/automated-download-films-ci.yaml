@@ -6,12 +6,8 @@ on:
     branches:
       - 'main'
       - 'develop'
-    paths:
-      - lavanda-automated-download-films/**
-      - .github/workflows/automated-download-films-ci.yaml
   workflow_dispatch:    
-env:
-  DIRECTORY: lavanda-automated-download-films
+
 jobs:
   test-nightly:
     if: github.event_name == 'schedule'
@@ -24,7 +20,7 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: Build Maven
-        run: mvn test -s $GITHUB_WORKSPACE/.mvn/settings.xml --file ${{ env.DIRECTORY }}/pom.xml --file ${{ env.DIRECTORY }}/pom.xml
+        run: mvn test -s $GITHUB_WORKSPACE/.mvn/settings.xml 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
       - name: Send telegram message
@@ -45,12 +41,12 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }} 
-          directory: ${{ env.DIRECTORY }}
+          directory: .
       - uses: ./.github/workflows/composite/build-push-docker-java-image
         with:
           registry_username: ${{ secrets.DOCKER_USERNAME}}
           registry_password: ${{ secrets.DOCKER_PASSWORD }}
-          directory: ${{ env.DIRECTORY }}
+          directory: .
           github_workspace: $GITHUB_WORKSPACE
           github_token: ${{ secrets.GITHUB_TOKEN }} 
   next-snapshot:
@@ -64,7 +60,7 @@ jobs:
           ref: develop   
       - uses: ./.github/workflows/composite/next-maven-snapshot
         with:
-          directory: ${{ env.DIRECTORY }}
+          directory: .
   notification:
     needs: [release-build-push-docker, next-snapshot, test-nightly]
     runs-on: ubuntu-latest  
