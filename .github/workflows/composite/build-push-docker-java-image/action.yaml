@@ -28,6 +28,7 @@ runs:
       with:
         java-version: "11"
         distribution: "adopt"
+        cache: 'maven'
     - name: Login to DockerHub
       uses: docker/login-action@v1.8.0
       with:
@@ -35,7 +36,6 @@ runs:
         password: ${{ inputs.registry_password }}
     - name: Release
       shell: bash
-      working-directory: ${{ inputs.directory }}
-      run: mvn compile jib:build -s ${{ inputs.github_workspace }}/.mvn/settings.xml
+      run: mvn compile jib:build -s settings.xml
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }} 

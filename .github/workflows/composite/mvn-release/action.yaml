@@ -4,14 +4,10 @@ inputs:
   github_token:
     description: "Github token" 
     required: true
-  directory:
-    description: "Directory"
-    required: true  
 runs:
   using: "composite"
   steps:
   - name: Remove snapshot
-    working-directory: ${{ inputs.directory }} 
     shell: bash
     run: |
       mvn -B versions:set -DremoveSnapshot -DgenerateBackupPoms=false

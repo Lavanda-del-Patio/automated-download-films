@@ -5,9 +5,7 @@
 	<groupId>es.lavanda</groupId>
 	<artifactId>automated-download-films</artifactId>
 	<version>0.0.78-SNAPSHOT</version>
-
 	<packaging>jar</packaging>
-
 	<name>lavanda-automated-download-films</name>
 
 	<parent>
@@ -23,20 +21,11 @@
 		<start-class>com.lavanda.automated.download.films.App</start-class>
 	</properties>
 
-
-	<distributionManagement>
-		<repository>
-			<id>github</id>
-			<name>GitHub luiscajl Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/luiscajl/lavanda-microservices</url>
-		</repository>
-	</distributionManagement>
-
 	<dependencies>
 		<dependency>
 			<groupId>es.lavanda</groupId>
 			<artifactId>lib-common</artifactId>
-			<version>0.0.50</version>
+			<version>0.0.54</version>
 		</dependency>
 		<!-- ====================================================================== -->
 		<!-- ============================== SPRINGBOOT ============================ -->
@@ -76,7 +65,7 @@
 			<version>2.2.2.RELEASE</version>
 		</dependency>
 		<!-- ====================================================================== -->
-		<!-- ===================== SPRING-SECURITY ================================= -->
+		<!-- ===================== SPRING-SECURITY ================================ -->
 		<!-- ====================================================================== -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -91,7 +80,7 @@
 			<artifactId>spring-boot-starter-oauth2-client</artifactId>
 		</dependency> -->
 		<!-- ====================================================================== -->
-		<!-- =========================== LOMBOK =============================== -->
+		<!-- =============================== LOMBOK =============================== -->
 		<!-- ====================================================================== -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
