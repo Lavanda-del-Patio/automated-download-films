@@ -19,7 +19,7 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: Build Maven
-        run: mvn test -s settings.xml 
+        run: mvn test -s .mvn/settings.xml 
         env:
           GITHUB_TOKEN: ${{ secrets.DEPLOY_GITHUB_TOKEN }}  
       - name: Send telegram message
