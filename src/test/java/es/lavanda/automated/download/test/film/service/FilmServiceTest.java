@@ -32,7 +32,6 @@ public class FilmServiceTest {
                 // FilmModel showModelToDownload = new FilmModel();
                 // showModelToDownload.setImage("https://pctfenix.com/uploads/i/thumbs/0_1583302664-Blindspot.jpg");
                 // showModelToDownload.setTitle("blindspot");
-                
                 // Assertions.assertNotNull(showsServiceImpl);
 
                 // List<FilmModel> showModels = new ArrayList<>();
