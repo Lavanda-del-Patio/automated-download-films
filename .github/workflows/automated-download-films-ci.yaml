@@ -41,7 +41,7 @@ jobs:
         with:
           github_token: ${{ secrets.DEPLOY_GITHUB_TOKEN }} 
           directory: .
-      - uses: ./.github/workflows/composite/build-push-docker-java-image
+      - uses: luiscajl/mvn-build-push-dockerhub@main
         with:
           registry_username: ${{ secrets.DOCKER_USERNAME }}
           registry_password: ${{ secrets.DOCKER_PASSWORD }}
