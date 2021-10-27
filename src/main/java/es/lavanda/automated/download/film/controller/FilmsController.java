@@ -1,10 +1,10 @@
-package com.lavanda.automated.download.films.controller;
+package es.lavanda.automated.download.film.controller;
 
 import java.util.List;
 
-import com.lavanda.automated.download.films.exception.AutomatedDownloadFilmsException;
-import com.lavanda.automated.download.films.model.FilmModel;
-import com.lavanda.automated.download.films.service.FilmsServiceImpl;
+import es.lavanda.automated.download.film.exception.AutomatedDownloadFilmsException;
+import es.lavanda.automated.download.film.model.FilmModel;
+import es.lavanda.automated.download.film.service.FilmsServiceImpl;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -53,7 +53,6 @@ public class FilmsController {
 	@PutMapping("/{filmModelId}")
 	public ResponseEntity<FilmModel> editFilm(@PathVariable String filmModelId, @RequestBody FilmModel filmModel) {
 		return ResponseEntity.status(HttpStatus.ACCEPTED).body(filmsServiceImpl.updateFilm(filmModelId, filmModel));
-
 	}
 
 	@PutMapping("/torrents/{torrentId}")
@@ -64,8 +63,8 @@ public class FilmsController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<FilmModel> getFilm(@PathVariable String id) {
-		return ResponseEntity.ok(filmsServiceImpl.getFilm(id));
+	public ResponseEntity<FilmModel> getFilm(@PathVariable String id, @RequestParam boolean force) {
+		return ResponseEntity.ok(filmsServiceImpl.getFilm(id, force));
 	}
 
 	@DeleteMapping("/{id}")

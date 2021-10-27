@@ -1,4 +1,4 @@
-package com.lavanda.automated.download.films.model;
+package es.lavanda.automated.download.film.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

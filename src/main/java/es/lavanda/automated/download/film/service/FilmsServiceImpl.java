@@ -1,14 +1,14 @@
-package com.lavanda.automated.download.films.service;
+package es.lavanda.automated.download.film.service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.lavanda.automated.download.films.exception.AutomatedDownloadFilmsException;
-import com.lavanda.automated.download.films.model.FilmModel;
-import com.lavanda.automated.download.films.model.TransmissionModelRequest;
-import com.lavanda.automated.download.films.repository.FilmModelRepository;
+import es.lavanda.automated.download.film.exception.AutomatedDownloadFilmsException;
+import es.lavanda.automated.download.film.model.FilmModel;
+import es.lavanda.automated.download.film.model.TransmissionModelRequest;
+import es.lavanda.automated.download.film.repository.FilmModelRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -48,7 +48,7 @@ public class FilmsServiceImpl {
     }
 
     public FilmModel updateFilm(String filmModelId, FilmModel filmModel) {
-        getFilm(filmModelId);
+        getFilm(filmModelId,false);
         FilmModel filmModelUpdated = save(filmModel);
         sendToAgent(filmModelUpdated);
         return filmModelUpdated;
@@ -72,14 +72,17 @@ public class FilmsServiceImpl {
         return filmModelRepository.findAllByTitle(title);
     }
 
-    public FilmModel getFilm(String id) {
+    public FilmModel getFilm(String id, boolean force) {
         log.info("Finding film with id {}", id);
         Optional<FilmModel> optShowModel = filmModelRepository.findById(id);
-        if (optShowModel.isPresent()) {
-            return optShowModel.get();
-        } else {
+        if (!optShowModel.isPresent()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Film not found");
         }
+        if (force) {
+            log.info("Force update metadata for  film {}", id);
+            sendToAgent(optShowModel.get());
+        }
+        return optShowModel.get();
     }
 
     public FilmModel createFilm(FilmModel showModel) {
@@ -178,7 +181,7 @@ public class FilmsServiceImpl {
     }
 
     public void updateFilmWithMediaDTO(MediaODTO mediaODTO) {
-        FilmModel filmModel = getFilm(mediaODTO.getId());
+        FilmModel filmModel = getFilm(mediaODTO.getId(),false);
         List<FilmModel> filmModelsWithSameOriginalId = filmModelRepository.findByIdOriginal(mediaODTO.getIdOriginal());
         for (FilmModel filmModelIterator : filmModelsWithSameOriginalId) {
             filmModel.getTorrents().addAll(filmModelIterator.getTorrents());
@@ -215,7 +218,7 @@ public class FilmsServiceImpl {
 
     public FilmModelTorrent deleteFilmByTorrentId(String torrentId) {
         FilmModel filmModel = filmModelRepository.findByTorrentsTorrentId(torrentId).orElseThrow(
-            () -> new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId));
+                () -> new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId));
         FilmModelTorrent filmModelTorrent = filmModel.getTorrents().stream()
                 .filter(torrent -> torrent.getTorrentId().toString().equals(torrentId)).findFirst().orElseThrow(
                         () -> new AutomatedDownloadFilmsException("Not exists film with this  torrentId " + torrentId));

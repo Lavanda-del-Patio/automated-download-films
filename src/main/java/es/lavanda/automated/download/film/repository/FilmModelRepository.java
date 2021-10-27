@@ -1,9 +1,9 @@
-package com.lavanda.automated.download.films.repository;
+package es.lavanda.automated.download.film.repository;
 
 import java.util.List;
 import java.util.Optional;
 
-import com.lavanda.automated.download.films.model.FilmModel;
+import es.lavanda.automated.download.film.model.FilmModel;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

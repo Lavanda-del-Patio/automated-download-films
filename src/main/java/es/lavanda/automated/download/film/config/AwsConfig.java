@@ -1,4 +1,4 @@
-package com.lavanda.automated.download.films.config;
+package es.lavanda.automated.download.film.config;
 
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
