@@ -6,12 +6,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import es.lavanda.automated.download.film.model.FilmModel;
+import es.lavanda.automated.download.film.model.TorrentCheckedResponse;
+import es.lavanda.lib.common.model.FilmModelTorrent;
+import es.lavanda.lib.common.model.MediaODTO;
 
 public interface FilmsService {
-
-    FilmModel getFilmByTitle(String title);
-
-    FilmModel save(FilmModel filmModel);
 
     FilmModel updateFilm(String filmModelId, FilmModel filmModel);
 
@@ -27,11 +26,7 @@ public interface FilmsService {
 
     FilmModel getFilm(String id, boolean force);
 
-    FilmModel createFilm(FilmModel showModel);
-
     FilmModel editFilm(FilmModel showModel);
-
-    // void cleanDuplicates();
 
     void checkTorrents();
 
@@ -39,11 +34,9 @@ public interface FilmsService {
 
     void executeFilm(FilmModelTorrent filmModelTorrent);
 
-    void updateLibrary();
-
     void updateFilmWithMediaDTO(MediaODTO mediaODTO);
 
     FilmModelTorrent updateTorrent(String torrentId, FilmModelTorrent filmModelTorrent);
 
-    void deleteFilmByTorrentId(String torrentId);
+    void deleteTorrentOfFilmModel(String torrentId);
 }

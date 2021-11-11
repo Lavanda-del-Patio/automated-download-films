@@ -75,7 +75,7 @@ public class FilmsController {
 
 	@DeleteMapping("/torrents/{id}")
 	public ResponseEntity<Void> deleteTorrent(@PathVariable String id) {
-		filmsServiceImpl.deleteFilmByTorrentId(id);
+		filmsServiceImpl.deleteTorrentOfFilmModel(id);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 

@@ -33,20 +33,6 @@ public class FilmsServiceImpl implements FilmsService {
 
     private final ProducerService producerService;
 
-    public Page<FilmModel> getAllFilms(Pageable pageable) {
-        return filmModelRepository.findAll(pageable);
-    }
-
-    public FilmModel getFilmByTitle(String title) {
-        log.debug("Finding film by title");
-        return filmModelRepository.findByTitle(title)
-                .orElseThrow(() -> new AutomatedDownloadFilmsException("Not found film by title"));
-    }
-
-    public FilmModel save(FilmModel filmModel) {
-        return filmModelRepository.save(filmModel);
-    }
-
     public FilmModel updateFilm(String filmModelId, FilmModel filmModel) {
         getFilm(filmModelId, false);
         FilmModel filmModelUpdated = save(filmModel);
@@ -89,37 +75,9 @@ public class FilmsServiceImpl implements FilmsService {
         return optShowModel.get();
     }
 
-    public FilmModel createFilm(FilmModel showModel) {
-        return filmModelRepository.save(showModel);
-    }
-
     public FilmModel editFilm(FilmModel showModel) {
         return filmModelRepository.save(showModel);
     }
-
-    // public void cleanDuplicates() {
-    // Iterable<FilmModel> withDuplicatesIterable = filmModelRepository.findAll();
-    // List<FilmModel> withDuplicates = new ArrayList<>();
-    // withDuplicatesIterable.forEach(withDuplicates::add);
-    // List<FilmModel> withoutDuplicates = new ArrayList<>();
-    // for (FilmModel filmModel : withDuplicates) {
-    // boolean toAggregate = true;
-    // for (FilmModel filmModel2 : withoutDuplicates) {
-    // if (Objects.nonNull(filmModel.getTorrentUrl()) &&
-    // Objects.nonNull(filmModel2.getTorrentUrl())
-    // && filmModel2.getTorrentUrl().equals(filmModel.getTorrentUrl())) {
-    // toAggregate = false;
-    // }
-    // }
-    // if (toAggregate) {
-    // withoutDuplicates.add(filmModel);
-    // }
-    // }
-    // log.info("Tamaño withDuplicates {}", withDuplicates.size());
-    // log.info("Tamaño withoutDuplicates {}", withoutDuplicates.size());
-    // filmModelRepository.deleteAll();
-    // filmModelRepository.saveAll(withoutDuplicates);
-    // }
 
     public void checkTorrents() {
         Iterable<FilmModel> withDuplicatesIterable = filmModelRepository.findAll();
@@ -169,17 +127,6 @@ public class FilmsServiceImpl implements FilmsService {
         }
     }
 
-    public void updateLibrary() {
-        Iterable<FilmModel> withDuplicatesIterable = filmModelRepository.findAll();
-        List<FilmModel> filmModels = new ArrayList<>();
-        withDuplicatesIterable.forEach(filmModels::add);
-        for (FilmModel filmModel : filmModels) {
-            sendToAgent(filmModel);
-            // filmModelRepository.save(filmModel);
-            // updateFilm(filmModel);
-        }
-    }
-
     public void updateFilmWithMediaDTO(MediaODTO mediaODTO) {
         FilmModel filmModel = getFilm(mediaODTO.getId(), false);
         List<FilmModel> filmModelsWithSameOriginalId = filmModelRepository.findByIdOriginal(mediaODTO.getIdOriginal());
@@ -216,16 +163,54 @@ public class FilmsServiceImpl implements FilmsService {
         return filmModelTorrent;
     }
 
-    public void deleteFilmByTorrentId(String torrentId) {
+    public void deleteTorrentOfFilmModel(String torrentId) {
         FilmModel filmModel = filmModelRepository.findByTorrentsTorrentId(torrentId).orElseThrow(
                 () -> new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId));
         if (Boolean.FALSE.equals(
                 filmModel.getTorrents().removeIf(torrent -> torrent.getTorrentId().toString().equals(torrentId)))) {
             throw new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId);
-        }
-        else{
+        } else {
             filmModelRepository.save(filmModel);
         }
+    }
+
+    private FilmModel createFilm(FilmModel showModel) {
+        return filmModelRepository.save(showModel);
+    }
+
+    private void updateLibrary() {
+        Iterable<FilmModel> withDuplicatesIterable = filmModelRepository.findAll();
+        List<FilmModel> filmModels = new ArrayList<>();
+        withDuplicatesIterable.forEach(filmModels::add);
+        for (FilmModel filmModel : filmModels) {
+            sendToAgent(filmModel);
+            // filmModelRepository.save(filmModel);
+            // updateFilm(filmModel);
+        }
+    }
+
+    private void cleanDuplicates() {
+        Iterable<FilmModel> withDuplicatesIterable = filmModelRepository.findAll();
+        List<FilmModel> withDuplicates = new ArrayList<>();
+        withDuplicatesIterable.forEach(withDuplicates::add);
+        List<FilmModel> withoutDuplicates = new ArrayList<>();
+        for (FilmModel filmModel : withDuplicates) {
+            boolean toAggregate = true;
+            // for (FilmModel filmModel2 : withoutDuplicates) {
+            // if (Objects.nonNull(filmModel.get()) &&
+            // Objects.nonNull(filmModel2.getTorrentUrl())
+            // && filmModel2.getTorrentUrl().equals(filmModel.getTorrentUrl())) {
+            // toAggregate = false;
+            // }
+            // }
+            if (toAggregate) {
+                withoutDuplicates.add(filmModel);
+            }
+        }
+        log.info("Tamaño withDuplicates {}", withDuplicates.size());
+        log.info("Tamaño withoutDuplicates {}", withoutDuplicates.size());
+        filmModelRepository.deleteAll();
+        filmModelRepository.saveAll(withoutDuplicates);
     }
 
     private void createNewFilmModel(FilmModelTorrent filmModelTorrent) {
@@ -266,6 +251,10 @@ public class FilmsServiceImpl implements FilmsService {
         log.info("Checking if needs to be downloaded:  {}", filmModel.getTorrentUrl());
         producerService.sendTorrentToDownload(new TorrentModelRequest(filmModel.getTorrentUrl()));
         filmModel.setDownloaded(true);
+    }
+
+    private FilmModel save(FilmModel filmModel) {
+        return filmModelRepository.save(filmModel);
     }
 
 }
