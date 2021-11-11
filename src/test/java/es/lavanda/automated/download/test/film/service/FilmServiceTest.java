@@ -1,8 +1,8 @@
-package com.lavanda.automated.download.test.films.service;
+package es.lavanda.automated.download.test.film.service;
 
-import com.lavanda.automated.download.films.repository.FilmModelRepository;
-import com.lavanda.automated.download.films.service.FilmsServiceImpl;
-import com.lavanda.automated.download.films.service.ProducerService;
+import es.lavanda.automated.download.film.repository.FilmModelRepository;
+import es.lavanda.automated.download.film.service.FilmsServiceImpl;
+import es.lavanda.automated.download.film.service.ProducerService;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

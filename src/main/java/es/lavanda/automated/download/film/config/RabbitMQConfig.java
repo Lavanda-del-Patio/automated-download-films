@@ -1,4 +1,4 @@
-package com.lavanda.automated.download.films.config;
+package es.lavanda.automated.download.film.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

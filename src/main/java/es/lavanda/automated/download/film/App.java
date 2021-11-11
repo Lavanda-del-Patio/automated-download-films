@@ -1,4 +1,4 @@
-package com.lavanda.automated.download.films;
+package es.lavanda.automated.download.film;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

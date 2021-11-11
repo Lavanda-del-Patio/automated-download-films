@@ -1,4 +1,4 @@
-package com.lavanda.automated.download.films.model;
+package es.lavanda.automated.download.film.model;
 
 import java.time.LocalDate;
 import java.util.Date;
