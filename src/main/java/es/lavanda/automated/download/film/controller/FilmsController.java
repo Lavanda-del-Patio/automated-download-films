@@ -91,4 +91,9 @@ public class FilmsController {
 	// return new ResponseEntity<>(HttpStatus.OK);
 	// }
 
+	@GetMapping("/check-torrents")
+	public ResponseEntity<Void> updateLibrary() {
+        filmsServiceImpl.checkTorrents();
+	return new ResponseEntity<>(HttpStatus.OK);
+	}
 }
