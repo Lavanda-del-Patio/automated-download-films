@@ -1,6 +1,7 @@
 package es.lavanda.automated.download.film.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -33,6 +34,7 @@ public class FilmsServiceImpl implements FilmsService {
 
     private final ProducerService producerService;
 
+    @Override
     public FilmModel updateFilm(String filmModelId, FilmModel filmModel) {
         getFilm(filmModelId, false);
         FilmModel filmModelUpdated = save(filmModel);
@@ -40,28 +42,34 @@ public class FilmsServiceImpl implements FilmsService {
         return filmModelUpdated;
     }
 
+    @Override
     public List<FilmModel> searchFilms(String search) {
         return filmModelRepository.findByTitleContainsIgnoreCaseOrderByCreatedAtDesc(search);
     }
 
+    @Override
     public void deleteFilmById(String id) {
         filmModelRepository.deleteById(id);
     }
 
+    @Override
     public List<FilmModel> getLastFilms() {
         log.debug("getThreeLastFilms");
         return filmModelRepository.findTop6ByOrderByCreatedAtDesc();
     }
 
+    @Override
     public Page<FilmModel> getAllFilmsOrderedByCreated(Pageable pageable) {
         return filmModelRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
+    @Override
     public List<FilmModel> getAllFilmsByTorrentTitle(String title) {
         log.debug("Finding film by title");
         return filmModelRepository.findAllByTitle(title);
     }
 
+    @Override
     public FilmModel getFilm(String id, boolean force) {
         log.info("Finding film with id {}", id);
         Optional<FilmModel> optShowModel = filmModelRepository.findById(id);
@@ -75,10 +83,12 @@ public class FilmsServiceImpl implements FilmsService {
         return optShowModel.get();
     }
 
+    @Override
     public FilmModel editFilm(FilmModel showModel) {
         return filmModelRepository.save(showModel);
     }
 
+    @Override
     public void checkTorrents() {
         Iterable<FilmModel> withDuplicatesIterable = filmModelRepository.findAll();
         List<FilmModel> withDuplicates = new ArrayList<>();
@@ -93,6 +103,7 @@ public class FilmsServiceImpl implements FilmsService {
         }
     }
 
+    @Override
     public void checkedTorrent(TorrentCheckedResponse torrentChecked) {
         log.info("checkedTorrent {}", torrentChecked.getTorrent());
         FilmModel filmModel = filmModelRepository.findByTorrentsTorrentUrl(torrentChecked.getTorrent())
@@ -118,13 +129,13 @@ public class FilmsServiceImpl implements FilmsService {
         }
     }
 
+    @Override
     public void executeFilm(FilmModelTorrent filmModelTorrent) {
         log.info("Execute film {}", filmModelTorrent.toString());
         if (Boolean.FALSE.equals(filmModelRepository.existsByTorrentsTorrentUrl(filmModelTorrent.getTorrentUrl()))) {
             try {
                 log.info("Torrent {} no exist on database ", filmModelTorrent.getTorrentUrl());
-
-                createNewFilmModel(filmModelTorrent);
+                createNewFilmModel(List.of(filmModelTorrent));
             } catch (AutomatedDownloadFilmsException e) {
                 log.error("Not sended torrent to agent", e);
                 throw e;
@@ -132,13 +143,9 @@ public class FilmsServiceImpl implements FilmsService {
         }
     }
 
+    @Override
     public void updateFilmWithMediaDTO(MediaODTO mediaODTO) {
         FilmModel filmModel = getFilm(mediaODTO.getId(), false);
-        List<FilmModel> filmModelsWithSameOriginalId = filmModelRepository.findByIdOriginal(mediaODTO.getIdOriginal());
-        for (FilmModel filmModelIterator : filmModelsWithSameOriginalId) {
-            filmModel.getTorrents().addAll(filmModelIterator.getTorrents());
-            filmModelRepository.deleteAll(filmModelsWithSameOriginalId);
-        }
         log.info("Update film {} with id {}", filmModel.getTorrents().stream().map(torrent -> torrent.getTorrentTitle())
                 .findFirst().orElse("NO NAME"), filmModel.getId());
         filmModel.setImage(mediaODTO.getImage());
@@ -150,8 +157,10 @@ public class FilmsServiceImpl implements FilmsService {
         filmModel.setOverview(mediaODTO.getOverview());
         filmModel.setVoteAverage(mediaODTO.getVoteAverage());
         save(filmModel);
+        joinSameIdOriginal(mediaODTO.getIdOriginal());
     }
 
+    @Override
     public FilmModelTorrent updateTorrent(String torrentId, FilmModelTorrent filmModelTorrent) {
         FilmModel filmModel = filmModelRepository.findByTorrentsTorrentId(torrentId).orElseThrow(
                 () -> new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId));
@@ -162,12 +171,14 @@ public class FilmsServiceImpl implements FilmsService {
                 && Boolean.TRUE.equals(filmModelTorrent.isAssignToDownload())) {
             sendToDownloadTorrent(filmModelTorrent);
         }
-        filmModel.getTorrents().removeIf(oldTorrent -> oldTorrent.getTorrentUrl().equals(filmModelTorrent.getTorrentUrl()));
+        filmModel.getTorrents()
+                .removeIf(oldTorrent -> oldTorrent.getTorrentUrl().equals(filmModelTorrent.getTorrentUrl()));
         filmModel.getTorrents().add(filmModelTorrent);
         save(filmModel);
         return filmModelTorrent;
     }
 
+    @Override
     public void deleteTorrentOfFilmModel(String torrentId) {
         FilmModel filmModel = filmModelRepository.findByTorrentsTorrentId(torrentId).orElseThrow(
                 () -> new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId));
@@ -188,6 +199,19 @@ public class FilmsServiceImpl implements FilmsService {
             if (filmModel2.getTorrents().size() == 0) {
                 deleteFilmById(filmModel2.getId());
             }
+        }
+    }
+
+    private void joinSameIdOriginal(String idOriginal) {
+        List<FilmModel> filmModelsWithSameOriginalId = filmModelRepository.findByIdOriginal(idOriginal);
+        if (filmModelsWithSameOriginalId.size() > 1) {
+            log.info("Join same id original {}", idOriginal);
+            List<FilmModelTorrent> listToAdd = new ArrayList<>();
+            for (FilmModel filmModelIterator : filmModelsWithSameOriginalId) {
+                listToAdd.addAll(filmModelIterator.getTorrents());
+            }
+            filmModelRepository.deleteAll(filmModelsWithSameOriginalId);
+            createNewFilmModel(listToAdd);
         }
     }
 
@@ -230,12 +254,13 @@ public class FilmsServiceImpl implements FilmsService {
         filmModelRepository.saveAll(withoutDuplicates);
     }
 
-    private void createNewFilmModel(FilmModelTorrent filmModelTorrent) {
-        log.info("Creating new filmModel with this data {} , torrent Url {}", filmModelTorrent.getTorrentCroppedTitle(),
-                filmModelTorrent.getTorrentUrl());
-        FilmModel filmModel = new FilmModel();
-        filmModel.getTorrents().add(filmModelTorrent);
-        sendToAgent(save(filmModel));
+    private void createNewFilmModel(List<FilmModelTorrent> filmModelTorrents) {
+        if (Boolean.FALSE.equals(filmModelTorrents.isEmpty())) {
+            log.info("Creating new filmModel with this data {} ", filmModelTorrents.get(0).getTorrentTitle());
+            FilmModel filmModel = new FilmModel();
+            filmModel.setTorrents(new HashSet<>(filmModelTorrents));
+            sendToAgent(save(filmModel));
+        }
     }
 
     private void sendToAgent(FilmModel filmModel) {
