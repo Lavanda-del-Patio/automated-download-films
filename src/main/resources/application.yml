@@ -13,3 +13,4 @@ cloud:
       endpoint:
         uri:
           transmission: https://sqs.eu-west-1.amazonaws.com/836783797541/transmission
+          torrent-check: https://sqs.eu-west-1.amazonaws.com/836783797541/torrent-check

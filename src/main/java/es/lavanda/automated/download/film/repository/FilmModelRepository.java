@@ -29,6 +29,8 @@ public interface FilmModelRepository extends PagingAndSortingRepository<FilmMode
 
     Optional<FilmModel> findByTorrentsTorrentId(String torrentId);
 
+    Optional<FilmModel> findByTorrentsTorrentUrl(String torrentUrl);
+
     List<FilmModel> findByTitleContainsIgnoreCaseOrderByCreatedAtDesc(String title);
 
 }

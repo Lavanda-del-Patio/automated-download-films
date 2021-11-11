@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class TransmissionModelRequest {
+public class TorrentModelRequest {
 
     private String torrent;
 

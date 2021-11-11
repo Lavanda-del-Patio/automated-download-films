@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import es.lavanda.automated.download.film.exception.AutomatedDownloadFilmsException;
 import es.lavanda.automated.download.film.model.LambdaDTO;
+import es.lavanda.automated.download.film.model.TorrentCheckedResponse;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.cloud.aws.messaging.listener.SqsMessageDeletionPolicy;
@@ -40,6 +41,22 @@ public class ConsumerService {
             throw new AutomatedDownloadFilmsException("The message cannot convert to FilmModelTorrent", e);
         }
         lambda.getFilmModelTorrents().forEach(filmsServiceImpl::executeFilm);
+        log.debug("Work message finished");
+    }
+
+
+    @SqsListener(value = "torrent-checked-${spring.profiles.active}", deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
+    public void consumeTorrentChecked(String string) throws AutomatedDownloadFilmsException {
+        log.info("Reading message of the queue torrent-checked: {}", string);
+        ObjectMapper mapper = new ObjectMapper();
+        TorrentCheckedResponse torrentChecked = new TorrentCheckedResponse();
+        try {
+            torrentChecked = mapper.readValue(string, TorrentCheckedResponse.class);
+        } catch (JsonProcessingException e) {
+            log.error("The message cannot convert to FilmModelTorrent", e);
+            throw new AutomatedDownloadFilmsException("The message cannot convert to FilmModelTorrent", e);
+        }
+        filmsServiceImpl.checkedTorrent(torrentChecked);
         log.debug("Work message finished");
     }
 

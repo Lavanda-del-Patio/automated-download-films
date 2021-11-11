@@ -5,11 +5,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import es.lavanda.automated.download.film.exception.AutomatedDownloadFilmsException;
-import es.lavanda.automated.download.film.model.FilmModel;
-import es.lavanda.automated.download.film.model.TransmissionModelRequest;
-import es.lavanda.automated.download.film.repository.FilmModelRepository;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -17,6 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import es.lavanda.automated.download.film.exception.AutomatedDownloadFilmsException;
+import es.lavanda.automated.download.film.model.FilmModel;
+import es.lavanda.automated.download.film.model.TorrentCheckedResponse;
+import es.lavanda.automated.download.film.model.TorrentModelRequest;
+import es.lavanda.automated.download.film.repository.FilmModelRepository;
 import es.lavanda.lib.common.model.FilmModelTorrent;
 import es.lavanda.lib.common.model.MediaIDTO;
 import es.lavanda.lib.common.model.MediaIDTO.Type;
@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class FilmsServiceImpl {
+public class FilmsServiceImpl implements FilmsService {
 
     private final FilmModelRepository filmModelRepository;
 
@@ -48,10 +48,14 @@ public class FilmsServiceImpl {
     }
 
     public FilmModel updateFilm(String filmModelId, FilmModel filmModel) {
-        getFilm(filmModelId,false);
+        getFilm(filmModelId, false);
         FilmModel filmModelUpdated = save(filmModel);
         sendToAgent(filmModelUpdated);
         return filmModelUpdated;
+    }
+
+    public List<FilmModel> searchFilms(String search) {
+        return filmModelRepository.findByTitleContainsIgnoreCaseOrderByCreatedAtDesc(search);
     }
 
     public void deleteFilmById(String id) {
@@ -117,56 +121,52 @@ public class FilmsServiceImpl {
     // filmModelRepository.saveAll(withoutDuplicates);
     // }
 
+    public void checkTorrents() {
+        Iterable<FilmModel> withDuplicatesIterable = filmModelRepository.findAll();
+        List<FilmModel> withDuplicates = new ArrayList<>();
+        withDuplicatesIterable.forEach(withDuplicates::add);
+        for (FilmModel filmModel2 : withDuplicates) {
+            for (FilmModelTorrent filmModelTorrent : filmModel2.getTorrents()) {
+                if (Boolean.FALSE.equals(filmModelTorrent.isTorrentValidate())) {
+                    log.info("Send to torrentValidate {}", filmModelTorrent.getTorrentUrl());
+                    producerService.sendTorrentToValidate(new TorrentModelRequest(filmModelTorrent.getTorrentUrl()));
+                }
+            }
+        }
+    }
+
+    public void checkedTorrent(TorrentCheckedResponse torrentChecked) {
+        log.info("checkedTorrent {}", torrentChecked.getTorrent());
+        FilmModel filmModel = filmModelRepository.findByTorrentsTorrentUrl(torrentChecked.getTorrent())
+                .orElseThrow(() -> new AutomatedDownloadFilmsException(
+                        "Not found torrent on database " + torrentChecked.getTorrent()));
+        FilmModelTorrent filmModelTorrent = filmModel.getTorrents().stream()
+                .filter(x -> x.getTorrentUrl().equals(torrentChecked.getTorrent())).findFirst()
+                .orElseThrow(() -> new AutomatedDownloadFilmsException(
+                        "Not found torrent on database " + torrentChecked.getTorrent()));
+        if (torrentChecked.isValidate()) {
+            log.info("Torrent checked and validate");
+            filmModelTorrent.setTorrentMagnet(torrentChecked.getMagnet());
+            filmModelTorrent.setTorrentValidate(true);
+        } else {
+            log.info("Torrent to remove and validate");
+            filmModel.getTorrents().remove(filmModelTorrent);
+        }
+        save(filmModel);
+    }
+
     public void executeFilm(FilmModelTorrent filmModelTorrent) {
         log.info("Execute film {}", filmModelTorrent.toString());
         if (Boolean.FALSE.equals(filmModelRepository.existsByTorrentsTorrentUrl(filmModelTorrent.getTorrentUrl()))) {
             try {
+                log.info("Torrent {} no exist on database ", filmModelTorrent.getTorrentUrl());
+
                 createNewFilmModel(filmModelTorrent);
             } catch (AutomatedDownloadFilmsException e) {
                 log.error("Not sended torrent to agent", e);
                 throw e;
             }
         }
-    }
-
-    private void createNewFilmModel(FilmModelTorrent filmModelTorrent) {
-        FilmModel filmModel = new FilmModel();
-        filmModel.getTorrents().add(filmModelTorrent);
-        // filmModel.setTorrentCroppedTitle(filmModelTorrent.getTorrentCroppedTitle());
-        // filmModel.setTorrentUrl(filmModelTorrent.getTorrentUrl());
-        // filmModel.setTorrentImage(filmModelTorrent.getTorrentImage());
-        // filmModel.setTorrentTitle(filmModelTorrent.getTorrentTitle());
-        // filmModel.setTorrentSize(filmModelTorrent.getTorrentSize());
-        // filmModel.setTorrentQuality(filmModelTorrent.getTorrentQuality());
-        // filmModel.setTorrentPage(filmModelTorrent.getTorrentPage());
-        // filmModel.setTorrentYear(filmModelTorrent.getTorrentYear());
-        // filmModel.setType(null);
-        sendToAgent(save(filmModel));
-    }
-
-    private void sendToAgent(FilmModel filmModel) {
-        MediaIDTO mediaIDTO = new MediaIDTO();
-        mediaIDTO.setId(filmModel.getId());
-        String torrentCroppedTitle = filmModel.getTorrents().stream()
-                .filter(torrent -> StringUtils.hasText(torrent.getTorrentCroppedTitle()))
-                .map(FilmModelTorrent::getTorrentCroppedTitle).findFirst().orElse(null);
-        if (Objects.nonNull(torrentCroppedTitle)) {
-            mediaIDTO.setPossibleType(getPossibleType(torrentCroppedTitle));
-        }
-        mediaIDTO.setTorrentCroppedTitle(torrentCroppedTitle);
-        mediaIDTO.setTorrentTitle(
-                filmModel.getTorrents().stream().filter(torrent -> StringUtils.hasText(torrent.getTorrentTitle()))
-                        .map(FilmModelTorrent::getTorrentTitle).findFirst().orElse(null));
-        mediaIDTO.setTorrentYear(filmModel.getTorrents().stream().filter(torrent -> torrent.getTorrentYear() >= 0)
-                .map(FilmModelTorrent::getTorrentYear).findFirst().orElse(null));
-        if (Objects.nonNull(filmModel.getType())) {
-            mediaIDTO.setType(filmModel.getType());
-        }
-        producerService.sendToFeedAgentTMDB(mediaIDTO);
-    }
-
-    private Type getPossibleType(String torrentCroppedTitle) {
-        return torrentCroppedTitle.contains("Temporada") ? Type.SHOW : Type.FILM;
     }
 
     public void updateLibrary() {
@@ -181,7 +181,7 @@ public class FilmsServiceImpl {
     }
 
     public void updateFilmWithMediaDTO(MediaODTO mediaODTO) {
-        FilmModel filmModel = getFilm(mediaODTO.getId(),false);
+        FilmModel filmModel = getFilm(mediaODTO.getId(), false);
         List<FilmModel> filmModelsWithSameOriginalId = filmModelRepository.findByIdOriginal(mediaODTO.getIdOriginal());
         for (FilmModel filmModelIterator : filmModelsWithSameOriginalId) {
             filmModel.getTorrents().addAll(filmModelIterator.getTorrents());
@@ -216,25 +216,56 @@ public class FilmsServiceImpl {
         return filmModelTorrent;
     }
 
-    public FilmModelTorrent deleteFilmByTorrentId(String torrentId) {
+    public void deleteFilmByTorrentId(String torrentId) {
         FilmModel filmModel = filmModelRepository.findByTorrentsTorrentId(torrentId).orElseThrow(
                 () -> new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId));
-        FilmModelTorrent filmModelTorrent = filmModel.getTorrents().stream()
-                .filter(torrent -> torrent.getTorrentId().toString().equals(torrentId)).findFirst().orElseThrow(
-                        () -> new AutomatedDownloadFilmsException("Not exists film with this  torrentId " + torrentId));
-        filmModel.getTorrents().remove(filmModelTorrent);
-        filmModelRepository.save(filmModel);
-        return filmModelTorrent;
+        if (Boolean.FALSE.equals(
+                filmModel.getTorrents().removeIf(torrent -> torrent.getTorrentId().toString().equals(torrentId)))) {
+            throw new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId);
+        }
+        else{
+            filmModelRepository.save(filmModel);
+        }
+    }
+
+    private void createNewFilmModel(FilmModelTorrent filmModelTorrent) {
+        log.info("Creatin new filmModel with this data {} , torrent Url {}", filmModelTorrent.getTorrentCroppedTitle(),
+                filmModelTorrent.getTorrentUrl());
+        FilmModel filmModel = new FilmModel();
+        filmModel.getTorrents().add(filmModelTorrent);
+        sendToAgent(save(filmModel));
+    }
+
+    private void sendToAgent(FilmModel filmModel) {
+        log.info("Sending to agent the filmModel with ID {}", filmModel.getId());
+        MediaIDTO mediaIDTO = new MediaIDTO();
+        mediaIDTO.setId(filmModel.getId());
+        String torrentCroppedTitle = filmModel.getTorrents().stream()
+                .filter(torrent -> StringUtils.hasText(torrent.getTorrentCroppedTitle()))
+                .map(FilmModelTorrent::getTorrentCroppedTitle).findFirst().orElse(null);
+        if (Objects.nonNull(torrentCroppedTitle)) {
+            mediaIDTO.setPossibleType(getPossibleType(torrentCroppedTitle));
+        }
+        mediaIDTO.setTorrentCroppedTitle(torrentCroppedTitle);
+        mediaIDTO.setTorrentTitle(
+                filmModel.getTorrents().stream().filter(torrent -> StringUtils.hasText(torrent.getTorrentTitle()))
+                        .map(FilmModelTorrent::getTorrentTitle).findFirst().orElse(null));
+        mediaIDTO.setTorrentYear(filmModel.getTorrents().stream().filter(torrent -> torrent.getTorrentYear() >= 0)
+                .map(FilmModelTorrent::getTorrentYear).findFirst().orElse(null));
+        if (Objects.nonNull(filmModel.getType())) {
+            mediaIDTO.setType(filmModel.getType());
+        }
+        producerService.sendToFeedAgentTMDB(mediaIDTO);
+    }
+
+    private Type getPossibleType(String torrentCroppedTitle) {
+        return torrentCroppedTitle.contains("Temporada") ? Type.SHOW : Type.FILM;
     }
 
     private void sendToDownloadTorrent(FilmModelTorrent filmModel) {
         log.info("Checking if needs to be downloaded:  {}", filmModel.getTorrentUrl());
-        producerService.sendTorrent(new TransmissionModelRequest(filmModel.getTorrentUrl()));
+        producerService.sendTorrentToDownload(new TorrentModelRequest(filmModel.getTorrentUrl()));
         filmModel.setDownloaded(true);
-    }
-
-    public List<FilmModel> searchFilms(String search) {
-        return filmModelRepository.findByTitleContainsIgnoreCaseOrderByCreatedAtDesc(search);
     }
 
 }

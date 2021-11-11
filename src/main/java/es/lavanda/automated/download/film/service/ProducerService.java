@@ -22,7 +22,10 @@ public class ProducerService {
     @Value("${cloud.aws.sqs.endpoint.uri.transmission}-${spring.profiles.active}")
     private String QUEUE_TRANSMISSION;
 
-    public void sendTorrent(Object message) throws AutomatedDownloadFilmsException {
+    @Value("${cloud.aws.sqs.endpoint.uri.torrent-check}-${spring.profiles.active}")
+    private String QUEUE_TORRENT_CHECK;
+
+    public void sendTorrentToDownload(Object message) throws AutomatedDownloadFilmsException {
         try {
             log.debug("Sending message to queue transmission {}", message);
             messagingTemplate.convertAndSend(QUEUE_TRANSMISSION, message);
@@ -30,6 +33,17 @@ public class ProducerService {
         } catch (Exception e) {
             log.error("Failed send message to queue transmission", e);
             throw new AutomatedDownloadFilmsException("Failed send message to queue transmission", e);
+        }
+    }
+
+    public void sendTorrentToValidate(Object message) throws AutomatedDownloadFilmsException {
+        try {
+            log.debug("Sending message to queue torrent-check {}", message);
+            messagingTemplate.convertAndSend(QUEUE_TORRENT_CHECK, message);
+            log.debug("Sended message to queue torrent-check");
+        } catch (Exception e) {
+            log.error("Failed send message to queue torrent-check", e);
+            throw new AutomatedDownloadFilmsException("Failed send message to queue torrent-check", e);
         }
     }
 
