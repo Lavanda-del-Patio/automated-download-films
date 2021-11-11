@@ -162,9 +162,9 @@ public class FilmsServiceImpl implements FilmsService {
                 && Boolean.TRUE.equals(filmModelTorrent.isAssignToDownload())) {
             sendToDownloadTorrent(filmModelTorrent);
         }
-        filmModel.getTorrents().remove(filmModelTorrent);
+        filmModel.getTorrents().removeIf(oldTorrent -> oldTorrent.getTorrentUrl().equals(filmModelTorrent.getTorrentUrl()));
         filmModel.getTorrents().add(filmModelTorrent);
-        filmModelRepository.save(filmModel);
+        save(filmModel);
         return filmModelTorrent;
     }
 
@@ -231,7 +231,7 @@ public class FilmsServiceImpl implements FilmsService {
     }
 
     private void createNewFilmModel(FilmModelTorrent filmModelTorrent) {
-        log.info("Creatin new filmModel with this data {} , torrent Url {}", filmModelTorrent.getTorrentCroppedTitle(),
+        log.info("Creating new filmModel with this data {} , torrent Url {}", filmModelTorrent.getTorrentCroppedTitle(),
                 filmModelTorrent.getTorrentUrl());
         FilmModel filmModel = new FilmModel();
         filmModel.getTorrents().add(filmModelTorrent);

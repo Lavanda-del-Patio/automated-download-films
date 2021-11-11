@@ -19,4 +19,12 @@ public class ScheduleService {
         filmsServiceImpl.checkTorrents();
         log.info("Finished Task scheduled sendTorrentsToCheck at midnight");
     }
+
+    @Scheduled(cron = "@midnight")
+    public void cleanEmptys() {
+        log.info("Task scheduled cleanEmptys at midnight");
+        filmsServiceImpl.cleanEmptys();
+        log.info("Finished Task scheduled cleanEmptys at midnight");
+
+    }
 }
