@@ -13,10 +13,10 @@ public class ScheduleService {
     @Autowired
     private FilmsServiceImpl filmsServiceImpl;
 
-    // @Scheduled(cron = "@midnight")
-    // @Scheduled(fixedDelay = 1000000)
+    @Scheduled(cron = "@midnight")
     public void sendTorrentsToCheck() {
         log.info("Task scheduled sendTorrentsToCheck at midnight");
         filmsServiceImpl.checkTorrents();
+        log.info("Finished Task scheduled sendTorrentsToCheck at midnight");
     }
 }

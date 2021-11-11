@@ -96,4 +96,10 @@ public class FilmsController {
         filmsServiceImpl.checkTorrents();
 	return new ResponseEntity<>(HttpStatus.OK);
 	}
+
+	@GetMapping("/clean-emptys")
+	public ResponseEntity<Void> cleanEmptys() {
+        filmsServiceImpl.cleanEmptys();
+	return new ResponseEntity<>(HttpStatus.OK);
+	}
 }

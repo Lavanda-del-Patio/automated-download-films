@@ -39,4 +39,7 @@ public interface FilmsService {
     FilmModelTorrent updateTorrent(String torrentId, FilmModelTorrent filmModelTorrent);
 
     void deleteTorrentOfFilmModel(String torrentId);
+
+    void cleanEmptys();
+
 }

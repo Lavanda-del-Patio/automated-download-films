@@ -106,11 +106,16 @@ public class FilmsServiceImpl implements FilmsService {
             log.info("Torrent checked and validate");
             filmModelTorrent.setTorrentMagnet(torrentChecked.getMagnet());
             filmModelTorrent.setTorrentValidate(true);
+            save(filmModel);
         } else {
             log.info("Torrent to remove and validate");
             filmModel.getTorrents().remove(filmModelTorrent);
+            if (filmModel.getTorrents().size() == 0) {
+                deleteFilmById(filmModel.getId());
+            } else {
+                save(filmModel);
+            }
         }
-        save(filmModel);
     }
 
     public void executeFilm(FilmModelTorrent filmModelTorrent) {
@@ -171,6 +176,18 @@ public class FilmsServiceImpl implements FilmsService {
             throw new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId);
         } else {
             filmModelRepository.save(filmModel);
+        }
+    }
+
+    @Override
+    public void cleanEmptys() {
+        Iterable<FilmModel> withDuplicatesIterable = filmModelRepository.findAll();
+        List<FilmModel> withDuplicates = new ArrayList<>();
+        withDuplicatesIterable.forEach(withDuplicates::add);
+        for (FilmModel filmModel2 : withDuplicates) {
+            if (filmModel2.getTorrents().size() == 0) {
+                deleteFilmById(filmModel2.getId());
+            }
         }
     }
 
