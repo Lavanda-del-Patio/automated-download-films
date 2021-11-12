@@ -106,27 +106,29 @@ public class FilmsServiceImpl implements FilmsService {
     @Override
     public void checkedTorrent(TorrentCheckedResponse torrentChecked) {
         log.info("checkedTorrent {}", torrentChecked.getTorrent());
-        FilmModel filmModel = filmModelRepository.findByTorrentsTorrentUrl(torrentChecked.getTorrent())
-                .orElseThrow(() -> new AutomatedDownloadFilmsException(
-                        "Not found torrent on database " + torrentChecked.getTorrent()));
-        FilmModelTorrent filmModelTorrent = filmModel.getTorrents().stream()
-                .filter(x -> x.getTorrentUrl().equals(torrentChecked.getTorrent())).findFirst()
-                .orElseThrow(() -> new AutomatedDownloadFilmsException(
-                        "Not found torrent on database " + torrentChecked.getTorrent()));
-        if (torrentChecked.isValidate()) {
-            log.info("Torrent checked and validate");
-            filmModelTorrent.setTorrentMagnet(torrentChecked.getMagnet());
-            filmModelTorrent.setTorrentValidate(true);
-            save(filmModel);
-        } else {
-            log.info("Torrent to remove and validate");
-            filmModel.getTorrents().remove(filmModelTorrent);
-            if (filmModel.getTorrents().size() == 0) {
-                deleteFilmById(filmModel.getId());
-            } else {
+        Optional<FilmModel> optFilmModel = filmModelRepository.findByTorrentsTorrentUrl(torrentChecked.getTorrent());
+        if (optFilmModel.isPresent()) {
+            FilmModel filmModel = optFilmModel.get();
+            FilmModelTorrent filmModelTorrent = filmModel.getTorrents().stream()
+                    .filter(x -> x.getTorrentUrl().equals(torrentChecked.getTorrent())).findFirst()
+                    .orElseThrow(() -> new AutomatedDownloadFilmsException(
+                            "Not found torrent on database " + torrentChecked.getTorrent()));
+            if (torrentChecked.isValidate()) {
+                log.info("Torrent checked and validate");
+                filmModelTorrent.setTorrentMagnet(torrentChecked.getMagnet());
+                filmModelTorrent.setTorrentValidate(true);
                 save(filmModel);
+            } else {
+                log.info("Torrent to remove and validate");
+                filmModel.getTorrents().remove(filmModelTorrent);
+                if (filmModel.getTorrents().size() == 0) {
+                    deleteFilmById(filmModel.getId());
+                } else {
+                    save(filmModel);
+                }
             }
         }
+
     }
 
     @Override
