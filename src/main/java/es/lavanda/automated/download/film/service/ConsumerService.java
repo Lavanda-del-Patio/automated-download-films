@@ -44,10 +44,9 @@ public class ConsumerService {
         log.debug("Work message finished");
     }
 
-
     @SqsListener(value = "torrent-checked-${spring.profiles.active}", deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
     public void consumeTorrentChecked(String string) throws AutomatedDownloadFilmsException {
-        log.info("Reading message of the queue torrent-checked: {}", string);
+        log.info("Reading message of the queue torrent-checked");
         ObjectMapper mapper = new ObjectMapper();
         TorrentCheckedResponse torrentChecked = new TorrentCheckedResponse();
         try {
