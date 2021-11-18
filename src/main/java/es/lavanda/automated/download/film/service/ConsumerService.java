@@ -29,20 +29,20 @@ public class ConsumerService {
         log.debug("Work message finished");
     }
 
-    @SqsListener(value = "feed-films-${spring.profiles.active}", deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
-    public void consumeMessage(String lambdaDestination) throws AutomatedDownloadFilmsException {
-        log.info("Reading message of the queue feed-films: {}", lambdaDestination);
-        ObjectMapper mapper = new ObjectMapper();
-        LambdaDTO lambda = new LambdaDTO();
-        try {
-            lambda = mapper.readValue(lambdaDestination, LambdaDTO.class);
-        } catch (JsonProcessingException e) {
-            log.error("The message cannot convert to FilmModelTorrent", e);
-            throw new AutomatedDownloadFilmsException("The message cannot convert to FilmModelTorrent", e);
-        }
-        lambda.getFilmModelTorrents().forEach(filmsServiceImpl::executeFilm);
-        log.debug("Work message finished");
-    }
+    // @SqsListener(value = "feed-films-${spring.profiles.active}", deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
+    // public void consumeMessage(String lambdaDestination) throws AutomatedDownloadFilmsException {
+    //     log.info("Reading message of the queue feed-films: {}", lambdaDestination);
+    //     ObjectMapper mapper = new ObjectMapper();
+    //     LambdaDTO lambda = new LambdaDTO();
+    //     try {
+    //         lambda = mapper.readValue(lambdaDestination, LambdaDTO.class);
+    //     } catch (JsonProcessingException e) {
+    //         log.error("The message cannot convert to FilmModelTorrent", e);
+    //         throw new AutomatedDownloadFilmsException("The message cannot convert to FilmModelTorrent", e);
+    //     }
+    //     lambda.getFilmModelTorrents().forEach(filmsServiceImpl::executeFilm);
+    //     log.debug("Work message finished");
+    // }
 
     @SqsListener(value = "torrent-checked-${spring.profiles.active}", deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
     public void consumeTorrentChecked(String string) throws AutomatedDownloadFilmsException {
