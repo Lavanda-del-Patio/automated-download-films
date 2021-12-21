@@ -63,8 +63,7 @@ public class FilmsServiceImpl implements FilmsService {
         return filmModelRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
-    @Override
-    public List<FilmModel> getAllFilmsByTorrentTitle(String title) {
+    private List<FilmModel> getAllFilmsByTorrentTitle(String title) {
         log.debug("Finding film by title");
         return filmModelRepository.findAllByTitle(title);
     }
@@ -83,8 +82,7 @@ public class FilmsServiceImpl implements FilmsService {
         return optShowModel.get();
     }
 
-    @Override
-    public FilmModel editFilm(FilmModel showModel) {
+    private FilmModel editFilm(FilmModel showModel) {
         return filmModelRepository.save(showModel);
     }
 
@@ -166,13 +164,6 @@ public class FilmsServiceImpl implements FilmsService {
     public FilmModelTorrent updateTorrent(String torrentId, FilmModelTorrent filmModelTorrent) {
         FilmModel filmModel = filmModelRepository.findByTorrentsTorrentId(torrentId).orElseThrow(
                 () -> new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId));
-        if (Objects.isNull(filmModel)) {
-            throw new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId);
-        }
-        if (Boolean.FALSE.equals(filmModelTorrent.isDownloaded())
-                && Boolean.TRUE.equals(filmModelTorrent.isAssignToDownload())) {
-            sendToDownloadTorrent(filmModelTorrent);
-        }
         filmModel.getTorrents()
                 .removeIf(oldTorrent -> oldTorrent.getTorrentUrl().equals(filmModelTorrent.getTorrentUrl()));
         filmModel.getTorrents().add(filmModelTorrent);
@@ -299,6 +290,27 @@ public class FilmsServiceImpl implements FilmsService {
 
     private FilmModel save(FilmModel filmModel) {
         return filmModelRepository.save(filmModel);
+    }
+
+    @Override
+    public FilmModelTorrent downloadTorrent(String torrentId, boolean forceDownload) {
+        log.info("Needs download? {}", forceDownload );
+        FilmModel filmModel = filmModelRepository.findByTorrentsTorrentId(torrentId).orElseThrow(
+                () -> new AutomatedDownloadFilmsException("Not exists film with this torrentId " + torrentId));
+        FilmModelTorrent filmModelTorrent = filmModel.getTorrents().stream()
+                .filter(x -> x.getTorrentId().equals(torrentId)).findFirst()
+                .orElseThrow(() -> new AutomatedDownloadFilmsException(
+                        "Not found torrent on database " + torrentId));
+        if (forceDownload) {
+            sendToDownloadTorrent(filmModelTorrent);
+            filmModelTorrent.setDownloaded(true);
+            filmModel.getTorrents()
+                    .removeIf(oldTorrent -> oldTorrent.getTorrentUrl().equals(filmModelTorrent.getTorrentUrl()));
+            filmModel.getTorrents().add(filmModelTorrent);
+            save(filmModel);
+            log.info("Downloaded and saved");
+        }
+        return filmModelTorrent;
     }
 
 }

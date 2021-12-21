@@ -22,11 +22,7 @@ public interface FilmsService {
 
     Page<FilmModel> getAllFilmsOrderedByCreated(Pageable pageable);
 
-    List<FilmModel> getAllFilmsByTorrentTitle(String title);
-
     FilmModel getFilm(String id, boolean force);
-
-    FilmModel editFilm(FilmModel showModel);
 
     void checkTorrents();
 
@@ -34,12 +30,14 @@ public interface FilmsService {
 
     void executeFilm(FilmModelTorrent filmModelTorrent);
 
-    void updateFilmWithMediaDTO(MediaODTO mediaODTO);
-
     FilmModelTorrent updateTorrent(String torrentId, FilmModelTorrent filmModelTorrent);
+
+    FilmModelTorrent downloadTorrent(String torrentId, boolean forceDownload);
 
     void deleteTorrentOfFilmModel(String torrentId);
 
     void cleanEmptys();
+
+    void updateFilmWithMediaDTO(MediaODTO mediaODTO);
 
 }
