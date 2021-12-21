@@ -4,7 +4,7 @@
 
 	<groupId>es.lavanda</groupId>
 	<artifactId>automated-download-films</artifactId>
-	<version>0.0.83</version>
+	<version>0.0.84-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>lavanda-automated-download-films</name>
 
@@ -24,7 +24,7 @@
 		<dependency>
 			<groupId>es.lavanda</groupId>
 			<artifactId>lib-common</artifactId>
-			<version>0.0.57</version>
+			<version>0.0.58</version>
 		</dependency>
 		<!-- ====================================================================== -->
 		<!-- ============================== SPRINGBOOT ============================ -->
